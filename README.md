@@ -16,7 +16,7 @@ Predict if a Earthquake death based on:
 - longitude
 - latutude
 
-We use a Random Forest Classifier trained on the **Earthquake death bDataset**.
+We use a Random Forest Classifier trained on the **Earthquake death Dataset**.
 
 ---
 
