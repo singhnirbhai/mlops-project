@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: diabetes-api
+  name: earthquake-api
   labels:
-    app: diabetes-api
+    app: earthquake-api
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: diabetes-api
+      app: earthquake-api
   template:
     metadata:
       labels:
-        app: diabetes-api
+        app: earthquake-api
     spec:
       containers:
-      - name: diabetes-api
+      - name: earthquake-api
         image: your-dockerhub-username/diabetes-api:latest
         ports:
         - containerPort: 8000
@@ -24,10 +24,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: diabetes-api-service
+  name: earthquake-api-service
 spec:
   selector:
-    app: diabetes-api
+    app: earthquake-api
   ports:
     - protocol: TCP
       port: 80
