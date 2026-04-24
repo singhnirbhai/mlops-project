@@ -4,77 +4,51 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
 import joblib
 
-# Load dataset
-url = "https://raw.githubusercontent.com/plotly/datasets/master/earthquake.csv"
-df = pd.read_csv(url)
+# -------------------------------
+# 📥 LOAD CLEAN DATA (FROM GITHUB)
+# -------------------------------
+url = "https://raw.githubusercontent.com/singhnirbhai/mlops-project/refs/heads/main/earthquake_final.csv"
+df = pd.read_csv(url, on_bad_lines='skip', engine='python')
 
-print("✅ Dataset Loaded")
-print("Columns:", df.columns.tolist())
-
-# Define categories
-categories = [
-    "0 Deaths",
-    "1-50 Deaths",
-    "51-100 Deaths",
-    "101-1000 Deaths",
-    ">1001 Deaths"
-]
-
-# Restructure dataset
-data = []
-
-for _, row in df.iterrows():
-    for cat in categories:
-        lat_col = f"{cat}, lat"
-        lon_col = f"{cat}, lon"
-
-        lat = row.get(lat_col)
-        lon = row.get(lon_col)
-
-        if pd.notna(lat) and pd.notna(lon):
-            data.append({
-                "lat": lat,
-                "lon": lon,
-                "label": cat
-            })
-
-# Convert to DataFrame
-new_df = pd.DataFrame(data)
-
-print("✅ Restructured Data Size:", new_df.shape)
+print("✅ Clean Dataset Loaded")
+print(df.head())
 
 # -------------------------------
-# 🔥 DATA CLEANING (IMPORTANT)
+# 🧹 DATA CLEANING
 # -------------------------------
+df = df.dropna()
 
-# Convert to numeric safely
-new_df["lat"] = pd.to_numeric(new_df["lat"], errors="coerce")
-new_df["lon"] = pd.to_numeric(new_df["lon"], errors="coerce")
+df["Year"] = df["Year"].astype(int)
+df["Latitude"] = pd.to_numeric(df["Latitude"], errors="coerce")
+df["Longitude"] = pd.to_numeric(df["Longitude"], errors="coerce")
 
-# Drop invalid rows
-new_df = new_df.dropna()
-
-# Reset index
-new_df = new_df.reset_index(drop=True)
-
-print("✅ Cleaned Data Size:", new_df.shape)
+df = df.dropna()
 
 # -------------------------------
-# 🔐 LABEL ENCODING
+# 🔐 ENCODERS
 # -------------------------------
-le = LabelEncoder()
-new_df["label"] = le.fit_transform(new_df["label"])
 
-# Save encoder (VERY IMPORTANT for API)
-joblib.dump(le, "label_encoder.pkl")
+# Encode Country
+country_encoder = LabelEncoder()
+df["Country_encoded"] = country_encoder.fit_transform(df["Country"])
+
+# Encode Target (Death Category)
+label_encoder = LabelEncoder()
+df["Death_Category"] = label_encoder.fit_transform(df["Death_Category"])
+
+# Save encoders
+joblib.dump(country_encoder, "country_encoder.pkl")
+joblib.dump(label_encoder, "label_encoder.pkl")
 
 # -------------------------------
 # 🎯 FEATURES & TARGET
 # -------------------------------
-X = new_df[["lat", "lon"]]
-y = new_df["label"]
+X = df[["Country_encoded", "Year", "Latitude", "Longitude"]]
+y = df["Death_Category"]
 
-# Split
+# -------------------------------
+# ✂️ SPLIT
+# -------------------------------
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
@@ -82,10 +56,12 @@ X_train, X_test, y_train, y_test = train_test_split(
 # -------------------------------
 # 🤖 MODEL TRAINING
 # -------------------------------
-model = RandomForestClassifier(n_estimators=100, random_state=42)
+model = RandomForestClassifier(n_estimators=200, random_state=42)
 model.fit(X_train, y_train)
 
-# Accuracy
+# -------------------------------
+# 📊 EVALUATION
+# -------------------------------
 accuracy = model.score(X_test, y_test)
 print(f"✅ Model Accuracy: {accuracy:.4f}")
 
@@ -95,4 +71,4 @@ print(f"✅ Model Accuracy: {accuracy:.4f}")
 joblib.dump(model, "earthquake_model.pkl")
 
 print("✅ Model saved as earthquake_model.pkl")
-print("✅ Encoder saved as label_encoder.pkl")
+print("✅ Encoders saved")
